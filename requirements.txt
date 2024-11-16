@@ -1,0 +1,6 @@
+streamlit 
+pandas
+PyPDF2
+docx2txt
+python-docx
+tiktoken
