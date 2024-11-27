@@ -3,32 +3,8 @@ import pandas as pd
 import streamlit as st
 
 from academic_chunker import AcademicDocumentChunker
+from data_processing import calculate_avg_tokens_per_section
 from utils import count_tokens, count_words
-
-
-def calculate_avg_tokens_per_section(chunks):
-    """Calculate average tokens per section"""
-    section_tokens = {}
-    section_counts = {}
-
-    for chunk in chunks:
-        section = chunk.section if chunk.section else "Unnamed Section"
-        tokens = count_tokens(chunk.content)
-
-        if section in section_tokens:
-            section_tokens[section] += tokens
-            section_counts[section] += 1
-        else:
-            section_tokens[section] = tokens
-            section_counts[section] = 1
-
-    avg_tokens = {
-        section: section_tokens[section] / section_counts[section]
-        for section in section_tokens
-    }
-
-    return avg_tokens
-
 
 st.set_page_config(layout="wide")
 st.title("Academic Document Section Chunker")
