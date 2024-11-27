@@ -1,17 +1,10 @@
-import streamlit as st
-import pandas as pd
-from academic_chunker import AcademicDocumentChunker
 import docx2txt
-import tiktoken
+import pandas as pd
+import streamlit as st
 
-def count_tokens(text: str) -> int:
-    """Count tokens using tiktoken cl100k_base encoder"""
-    encoder = tiktoken.get_encoding("cl100k_base")
-    return len(encoder.encode(text))
+from academic_chunker import AcademicDocumentChunker
+from utils import count_tokens, count_words
 
-def count_words(text: str) -> int:
-    """Count words in text"""
-    return len(text.split())
 
 def calculate_avg_tokens_per_section(chunks):
     """Calculate average tokens per section"""
@@ -36,20 +29,21 @@ def calculate_avg_tokens_per_section(chunks):
 
     return avg_tokens
 
+
 st.set_page_config(layout="wide")
 st.title("Academic Document Section Chunker")
 
-uploaded_file = st.file_uploader("Upload a document", type=['docx', 'txt'])
+uploaded_file = st.file_uploader("Upload a document", type=["docx", "txt"])
 
 if uploaded_file is not None:
     # Read and process the document
     try:
-        if uploaded_file.name.endswith('.docx'):
+        if uploaded_file.name.endswith(".docx"):
             # Extract text from Word document
             text = docx2txt.process(uploaded_file)
         else:
             # Handle text files
-            text = uploaded_file.read().decode('utf-8')
+            text = uploaded_file.read().decode("utf-8")
 
         # Process the text
         chunker = AcademicDocumentChunker()
@@ -59,7 +53,9 @@ if uploaded_file is not None:
         avg_tokens_per_section = calculate_avg_tokens_per_section(chunks)
 
         # Create tabs for different views
-        tab1, tab2, tab3 = st.tabs(["Chunk Overview", "Section Analysis", "Detailed View"])
+        tab1, tab2, tab3 = st.tabs(
+            ["Chunk Overview", "Section Analysis", "Detailed View"]
+        )
 
         with tab1:
             st.header("Document Structure Overview")
@@ -72,16 +68,18 @@ if uploaded_file is not None:
                 token_count = count_tokens(chunk.content)
                 section = chunk.section if chunk.section else "Unnamed Section"
 
-                overview_data.append({
-                    'Chunk #': i + 1,
-                    'Chapter': chunk.chapter,
-                    'Unit': chunk.unit,
-                    'Section': section,
-                    'Subsection': chunk.subsection,
-                    'Content Length': f"{content_length} chars / {word_count} words",
-                    'Token Count': token_count,
-                    'Section Avg Tokens': f"{avg_tokens_per_section[section]:.1f}"
-                })
+                overview_data.append(
+                    {
+                        "Chunk #": i + 1,
+                        "Chapter": chunk.chapter,
+                        "Unit": chunk.unit,
+                        "Section": section,
+                        "Subsection": chunk.subsection,
+                        "Content Length": f"{content_length} chars / {word_count} words",
+                        "Token Count": token_count,
+                        "Section Avg Tokens": f"{avg_tokens_per_section[section]:.1f}",
+                    }
+                )
 
             df = pd.DataFrame(overview_data)
             st.dataframe(df, use_container_width=True)
@@ -108,13 +106,12 @@ if uploaded_file is not None:
             st.header("Section Token Analysis")
 
             # Create section analysis DataFrame
-            section_analysis = pd.DataFrame([
-                {
-                    'Section': section,
-                    'Average Tokens': f"{avg_tokens:.1f}"
-                }
-                for section, avg_tokens in avg_tokens_per_section.items()
-            ])
+            section_analysis = pd.DataFrame(
+                [
+                    {"Section": section, "Average Tokens": f"{avg_tokens:.1f}"}
+                    for section, avg_tokens in avg_tokens_per_section.items()
+                ]
+            )
 
             # Display section analysis
             col1, col2 = st.columns([2, 1])
@@ -127,9 +124,13 @@ if uploaded_file is not None:
                 st.subheader("Section Distribution")
                 # Create a bar chart of average tokens per section
                 st.bar_chart(
-                    pd.DataFrame({
-                        'Average Tokens': {k: float(v) for k, v in avg_tokens_per_section.items()}
-                    })
+                    pd.DataFrame(
+                        {
+                            "Average Tokens": {
+                                k: float(v) for k, v in avg_tokens_per_section.items()
+                            }
+                        }
+                    )
                 )
 
         with tab3:
@@ -137,13 +138,13 @@ if uploaded_file is not None:
 
             # Add chunk selection
             chunk_titles = [
-                f"{i+1}. {chunk.section or chunk.subsection or 'Unnamed Section'}" 
+                f"{i+1}. {chunk.section or chunk.subsection or 'Unnamed Section'}"
                 for i, chunk in enumerate(chunks)
             ]
             selected_chunk = st.selectbox(
                 "Select chunk to view",
                 range(len(chunks)),
-                format_func=lambda x: chunk_titles[x]
+                format_func=lambda x: chunk_titles[x],
             )
 
             if selected_chunk is not None:
@@ -172,7 +173,9 @@ if uploaded_file is not None:
                     st.write(f"- Characters: {content_length:,}")
                     st.write(f"- Words: {word_count:,}")
                     st.write(f"- Tokens: {token_count:,}")
-                    st.write(f"- Section Average Tokens: {avg_tokens_per_section[section]:.1f}")
+                    st.write(
+                        f"- Section Average Tokens: {avg_tokens_per_section[section]:.1f}"
+                    )
 
                 with col2:
                     st.subheader("Chunk Content")
@@ -196,11 +199,13 @@ Content:
 """
                     st.download_button(
                         label="Download This Chunk",
-                        data=chunk_text.encode('utf-8'),
-                        file_name=f'chunk_{selected_chunk+1}.txt',
-                        mime='text/plain',
+                        data=chunk_text.encode("utf-8"),
+                        file_name=f"chunk_{selected_chunk+1}.txt",
+                        mime="text/plain",
                     )
 
     except Exception as e:
         st.error(f"Error processing document: {str(e)}")
-        st.write("Please make sure the document is properly formatted and not corrupted.")
+        st.write(
+            "Please make sure the document is properly formatted and not corrupted."
+        )
